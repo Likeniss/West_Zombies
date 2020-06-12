@@ -1,0 +1,263 @@
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+#define BOTAO3 6
+#define BOTAO4 7
+#define BOTAO1 9
+#define BOTAO2 8
+
+int velocidade = 1000;
+int ptiro,pzombie,pcowboy, pmunicao;
+bool vtiro, vmunicao = false;
+int pontos, game;
+double tempo;
+
+byte CowboyParado[8] = {
+    0b01000,
+    0b11100,
+    0b01011,
+    0b01110,
+    0b01000,
+    0b01000,
+    0b01000,
+    0b00000};
+
+byte CowboyAndando[8] = {
+    0b01110,
+    0b11111,
+    0b01110,
+    0b00101,
+    0b01110,
+    0b00100,
+    0b01010,
+    0b10001};
+
+byte ZombieParado[8] = {
+    0b01110,
+    0b10101,
+    0b01110,
+    0b00100,
+    0b11100,
+    0b00100,
+    0b01010,
+    0b01010};
+
+byte ZombieAndando[8] = {
+    0b01110,
+    0b10101,
+    0b01110,
+    0b00100,
+    0b11100,
+    0b00100,
+    0b01010,
+    0b10001};
+
+byte TiroPersonagem[8] = {
+    0b01010,
+    0b00100,
+    0b01010,
+    0b00000,
+    0b00000,
+    0b00000,
+    0b00000,
+    0b00000};
+
+byte Arma[8] = {
+ 0b00000,
+ 0b00000,
+ 0b00000,
+ 0b01110,
+ 0b01000,
+ 0b00000,
+ 0b00000,
+ 0b00000
+};
+void Menu();
+void CriarPersonagens();
+void Cowboy(int px);
+void Atirando();
+void Trailer();
+void GameOver();
+void Tiro(int px);
+void Zombie(int px);
+void Municao(int px);
+void Reset();
+void Painel (int px);
+
+void setup() //Roda antes de tudo
+{
+  game=0,ptiro=-1,pzombie=12,pcowboy=0, pmunicao=12, pontos=0,tempo=0;
+  
+    CriarPersonagens(); //Definir o estilo do personagens como os numeros
+    lcd.begin(16, 2);
+    Trailer(); //Trailer que criamos para o jogo
+    delay(1000); //Tempo do trailer na tela
+  	lcd.clear();//Limpa a tela
+  	game=true; //Define se o jogo roda ou não de acordo com o if abaixo
+  	vtiro=vmunicao=false;
+  
+}
+	            
+void loop()
+{
+  if (game==0){
+    Menu();
+    
+    
+    if (digitalRead(BOTAO1))
+    {
+      lcd.clear();
+      game = 1;
+
+    }
+    if (digitalRead(BOTAO3))
+    {
+      lcd.clear();
+      Tutorial();
+
+    }
+    if (digitalRead(BOTAO2))
+    {
+      lcd.clear();
+      Ranking();
+    }
+    if (digitalRead(BOTAO4))
+    {
+      lcd.clear();
+      Creditos();
+    }
+  }	 
+  if (game==1) { //Inicia o jogo
+    tempo+=1; //Adiciona 1 no tempo
+    lcd.clear();
+    Painel(14); //Pontuação e tempo 14 é a posição
+    
+    if (digitalRead(BOTAO1)==1){ //Se aperto o bt2 tiro aparece
+    	ptiro = 1;
+      	vtiro = true;  
+    }
+    pzombie-=1;
+    Cowboy(pcowboy);
+    Zombie(pzombie);
+    if (vtiro==true){
+     	Tiro(ptiro);
+    	ptiro+=1;
+    }
+    if (pzombie<0){
+    	pzombie=12;
+ 
+    }
+    if(ptiro > 16){
+    	
+      	ptiro = -1;
+      
+    }
+    if ((ptiro==pzombie+1)||(ptiro==pzombie)){
+        vtiro = false;    	
+      	pzombie=12;
+      	ptiro = -1;
+		pontos+=10;
+      	velocidade-=100;
+    }
+    if (pcowboy==pzombie){
+    	game=2;
+    }
+    delay(velocidade);
+  }if (game==2){
+    EndGame(2);
+    if (digitalRead(BOTAO2)==1){
+    Reset();
+    game = 0;  
+      lcd.clear();
+    }
+  }  
+	// quando pxtiro for igual do zombie ai tiro 
+    // se torna falso e volta pra posicao inicial
+    // zombie volta para posição inicial add 1 pros pontos       
+}
+void Menu()
+{
+    lcd.setCursor(0, 0);
+    lcd.print("Jogar");
+    lcd.setCursor(8, 0);
+    lcd.print("Tutorial");
+    lcd.setCursor(0, 1);
+    lcd.print("Ranking");
+    lcd.setCursor(8, 1);
+    lcd.print("Creditos");
+    
+}
+  
+void Trailer()
+{
+    lcd.setCursor(6, 0);
+    lcd.print("West");
+    lcd.setCursor(5, 1);
+    lcd.print("Zombies");
+}
+void CriarPersonagens()
+{
+    lcd.createChar(0, CowboyParado);
+    lcd.createChar(1, CowboyAndando);
+    lcd.createChar(2, ZombieParado);
+    lcd.createChar(3, ZombieAndando);
+    lcd.createChar(4, TiroPersonagem);
+    lcd.createChar(5, Arma);
+}
+
+void Zombie(int px){
+  lcd.setCursor(px, 1);
+  lcd.write(byte(2));
+  delay(30);
+  lcd.setCursor(px, 1);
+  lcd.write(byte(3));
+}
+void Cowboy(int px)
+{
+    lcd.setCursor(px, 1);
+    lcd.write(byte(0));
+    delay(30);
+    lcd.setCursor(px, 1);
+    lcd.write(byte(1));
+}
+void Tiro(int px)
+{    
+    lcd.setCursor(px, 1);
+    lcd.write(byte(4));
+}
+void Reset ()
+{
+	pontos = 0;
+	tempo = 0;
+  
+}
+void EndGame (int cond)
+{  
+	lcd.setCursor(9,0);
+	lcd.write("Pts:");
+    lcd.setCursor(13,0);
+	lcd.write(pontos);
+    lcd.setCursor(0,1);
+	lcd.write("Clique em Atirar");
+}
+void Painel (int px)
+{
+	lcd.setCursor(px,0);
+	lcd.write(pontos);
+	lcd.setCursor(px,1);
+	lcd.write(tempo);
+}
+void Tutorial () {
+	lcd.setCursor(0,0);
+  	lcd.print("Botao 1 Tiro");
+  	lcd.setCursor(0,1);
+    lcd.print("Mate os zombies");
+    delay(5000)
+}
+void Ranking  () {}
+void Creditos () {
+	lcd.setCursor(0,0);
+  	lcd.print("Lari - Vini");
+  	lcd.setCursor(0,1);
+    lcd.print("Oliver - Gabriel");
+    delay(5000)
+}
